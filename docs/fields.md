@@ -4392,7 +4392,11 @@ AzureArtifactRepository defines the controller configuration for an Azure Blob S
 |`accountKeySecret`|[`SecretKeySelector`](#secretkeyselector)|AccountKeySecret is the secret selector to the Azure Blob Storage account access key|
 |`blobNameFormat`|`string`|BlobNameFormat is defines the format of how to store blob names. Can reference workflow variables|
 |`container`|`string`|Container is the container where resources will be stored|
+|`enableParallelism`|`boolean`|EnableParallelism enables parallel artifact operations (uploads/downloads). Defaults to false.|
 |`endpoint`|`string`|Endpoint is the service url associated with an account. It is most likely "https://<ACCOUNT_NAME>.blob.core.windows.net"|
+|`fileCountThreshold`|`integer`|FileCountThreshold enables parallel operations when the number of files exceeds this threshold and EnableParallelism is true. Defaults to 0 (always use parallelism if > 1 file).|
+|`fileSizeThreshold`|[`Quantity`](#quantity)|FileSizeThreshold enables parallel multipart uploads for files larger than this size (e.g., "100Mi", "1Gi") when EnableParallelism is true. Defaults to 0 (always use multipart if possible and parallelism is enabled).|
+|`parallelism`|`integer`|Parallelism limits the maximum number of parallel artifact operations (uploads/downloads) when EnableParallelism is true. Defaults to 0 (no limit).|
 |`useSDKCreds`|`boolean`|UseSDKCreds tells the driver to figure out credentials based on sdk defaults.|
 
 ## GCSArtifactRepository
@@ -4411,7 +4415,11 @@ GCSArtifactRepository defines the controller configuration for a GCS artifact re
 | Field Name | Field Type | Description   |
 |:----------:|:----------:|---------------|
 |`bucket`|`string`|Bucket is the name of the bucket|
+|`enableParallelism`|`boolean`|EnableParallelism enables parallel artifact operations (uploads/downloads). Defaults to false.|
+|`fileCountThreshold`|`integer`|FileCountThreshold enables parallel operations when the number of files exceeds this threshold and EnableParallelism is true. Defaults to 0 (always use parallelism if > 1 file).|
+|`fileSizeThreshold`|[`Quantity`](#quantity)|FileSizeThreshold enables parallel multipart uploads for files larger than this size (e.g., "100Mi", "1Gi") when EnableParallelism is true. Defaults to 0 (always use multipart if possible and parallelism is enabled).|
 |`keyFormat`|`string`|KeyFormat defines the format of how to store keys and can reference workflow variables.|
+|`parallelism`|`integer`|Parallelism limits the maximum number of parallel artifact operations (uploads/downloads) when EnableParallelism is true. Defaults to 0 (no limit).|
 |`serviceAccountKeySecret`|[`SecretKeySelector`](#secretkeyselector)|ServiceAccountKeySecret is the secret selector to the bucket's service account key|
 
 ## HDFSArtifactRepository
@@ -4473,11 +4481,15 @@ S3ArtifactRepository defines the controller configuration for an S3 artifact rep
 |`bucket`|`string`|Bucket is the name of the bucket|
 |`caSecret`|[`SecretKeySelector`](#secretkeyselector)|CASecret specifies the secret that contains the CA, used to verify the TLS connection|
 |`createBucketIfNotPresent`|[`CreateS3BucketOptions`](#creates3bucketoptions)|CreateBucketIfNotPresent tells the driver to attempt to create the S3 bucket for output artifacts, if it doesn't exist. Setting Enabled Encryption will apply either SSE-S3 to the bucket if KmsKeyId is not set or SSE-KMS if it is.|
+|`enableParallelism`|`boolean`|EnableParallelism enables parallel artifact operations (uploads/downloads). Defaults to false.|
 |`encryptionOptions`|[`S3EncryptionOptions`](#s3encryptionoptions)|_No description available_|
 |`endpoint`|`string`|Endpoint is the hostname of the bucket endpoint|
+|`fileCountThreshold`|`integer`|FileCountThreshold enables parallel operations when the number of files exceeds this threshold and EnableParallelism is true. Defaults to 0 (always use parallelism if > 1 file).|
+|`fileSizeThreshold`|[`Quantity`](#quantity)|FileSizeThreshold enables parallel multipart uploads for files larger than this size (e.g., "100Mi", "1Gi") when EnableParallelism is true. Defaults to 0 (always use multipart if possible and parallelism is enabled).|
 |`insecure`|`boolean`|Insecure will connect to the service with TLS|
 |`keyFormat`|`string`|KeyFormat defines the format of how to store keys and can reference workflow variables.|
 |~~`keyPrefix`~~|~~`string`~~|~~KeyPrefix is prefix used as part of the bucket key in which the controller will store artifacts.~~ DEPRECATED. Use KeyFormat instead|
+|`parallelism`|`integer`|Parallelism limits the maximum number of parallel artifact operations (uploads/downloads) when EnableParallelism is true. Defaults to 0 (no limit).|
 |`region`|`string`|Region contains the optional bucket region|
 |`roleARN`|`string`|RoleARN is the Amazon Resource Name (ARN) of the role to assume.|
 |`secretKeySecret`|[`SecretKeySelector`](#secretkeyselector)|SecretKeySecret is the secret selector to the bucket's secret key|
@@ -6040,6 +6052,10 @@ SecretKeySelector selects a key of a Secret.
 |`name`|`string`|Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names|
 |`optional`|`boolean`|Specify whether the Secret or its key must be defined|
 
+## Quantity
+
+Quantity is a fixed-point representation of a number. It provides convenient marshaling/unmarshaling in JSON and YAML, in addition to String() and AsInt64() accessors. The serialization format is: ``` <quantity>    ::= <signedNumber><suffix> 	(Note that <suffix> may be empty, from the "" case in <decimalSI>.) <digit>      ::= 0 | 1 | ... | 9 <digits>     ::= <digit> | <digit><digits> <number>     ::= <digits> | <digits>.<digits> | <digits>. | .<digits> <sign>      ::= "+" | "-" <signedNumber>  ::= <number> | <sign><number> <suffix>     ::= <binarySI> | <decimalExponent> | <decimalSI> <binarySI>    ::= Ki | Mi | Gi | Ti | Pi | Ei 	(International System of units; See: http://physics.nist.gov/cuu/Units/binary.html) <decimalSI>    ::= m | "" | k | M | G | T | P | E 	(Note that 1024 = 1Ki but 1000 = 1k; I didn't choose the capitalization.) <decimalExponent> ::= "e" <signedNumber> | "E" <signedNumber> ``` No matter which of the three exponent forms is used, no quantity may represent a number greater than 2^63-1 in magnitude, nor may it have more than 3 decimal places. Numbers larger or more precise will be capped or rounded up. (E.g.: 0.1m will rounded up to 1m.) This may be extended in the future if we require larger or smaller quantities. When a Quantity is parsed from a string, it will remember the type of suffix it had, and will use the same type again when it is serialized. Before serializing, Quantity will be put in "canonical form". This means that Exponent/suffix will be adjusted up or down (with a corresponding increase or decrease in Mantissa) such that: - No precision is lost - No fractional digits will be emitted - The exponent (or suffix) is as large as possible. The sign will be omitted unless the number is negative. Examples: - 1.5 will be serialized as "1500m" - 1.5Gi will be serialized as "1536Mi" Note that the quantity will NEVER be internally represented by a floating point number. That is the whole point of this exercise. Non-canonical values will still parse as long as they are well formed, but will be re-emitted in their canonical form. (So always use canonical form, or don't diff.) This format is intended to make it difficult to use these numbers without writing some sort of special handling code in the hopes that that will cause implementors to also use a fixed point implementation.
+
 ## ManagedFieldsEntry
 
 ManagedFieldsEntry is a workflow-id, a FieldSet and the group version of the resource that the fieldset applies to.
@@ -7123,20 +7139,6 @@ ResourceClaim references one entry in PodSpec.ResourceClaims.
 |:----------:|:----------:|---------------|
 |`name`|`string`|Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.|
 |`request`|`string`|Request is the name chosen for a request in the referenced claim. If empty, everything from the claim is made available, otherwise only the result of this request.|
-
-## Quantity
-
-Quantity is a fixed-point representation of a number. It provides convenient marshaling/unmarshaling in JSON and YAML, in addition to String() and AsInt64() accessors. The serialization format is: ``` <quantity>    ::= <signedNumber><suffix> 	(Note that <suffix> may be empty, from the "" case in <decimalSI>.) <digit>      ::= 0 | 1 | ... | 9 <digits>     ::= <digit> | <digit><digits> <number>     ::= <digits> | <digits>.<digits> | <digits>. | .<digits> <sign>      ::= "+" | "-" <signedNumber>  ::= <number> | <sign><number> <suffix>     ::= <binarySI> | <decimalExponent> | <decimalSI> <binarySI>    ::= Ki | Mi | Gi | Ti | Pi | Ei 	(International System of units; See: http://physics.nist.gov/cuu/Units/binary.html) <decimalSI>    ::= m | "" | k | M | G | T | P | E 	(Note that 1024 = 1Ki but 1000 = 1k; I didn't choose the capitalization.) <decimalExponent> ::= "e" <signedNumber> | "E" <signedNumber> ``` No matter which of the three exponent forms is used, no quantity may represent a number greater than 2^63-1 in magnitude, nor may it have more than 3 decimal places. Numbers larger or more precise will be capped or rounded up. (E.g.: 0.1m will rounded up to 1m.) This may be extended in the future if we require larger or smaller quantities. When a Quantity is parsed from a string, it will remember the type of suffix it had, and will use the same type again when it is serialized. Before serializing, Quantity will be put in "canonical form". This means that Exponent/suffix will be adjusted up or down (with a corresponding increase or decrease in Mantissa) such that: - No precision is lost - No fractional digits will be emitted - The exponent (or suffix) is as large as possible. The sign will be omitted unless the number is negative. Examples: - 1.5 will be serialized as "1500m" - 1.5Gi will be serialized as "1536Mi" Note that the quantity will NEVER be internally represented by a floating point number. That is the whole point of this exercise. Non-canonical values will still parse as long as they are well formed, but will be re-emitted in their canonical form. (So always use canonical form, or don't diff.) This format is intended to make it difficult to use these numbers without writing some sort of special handling code in the hopes that that will cause implementors to also use a fixed point implementation.
-
-<details markdown>
-<summary>Examples with this field (click to open)</summary>
-
-- [`dns-config.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/dns-config.yaml)
-
-- [`pod-spec-patch-wf-tmpl.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/pod-spec-patch-wf-tmpl.yaml)
-
-- [`pod-spec-yaml-patch.yaml`](https://github.com/argoproj/argo-workflows/blob/main/examples/pod-spec-yaml-patch.yaml)
-</details>
 
 ## Capabilities
 

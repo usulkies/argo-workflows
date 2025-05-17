@@ -4422,9 +4422,25 @@
           "description": "Container is the container where resources will be stored",
           "type": "string"
         },
+        "enableParallelism": {
+          "description": "EnableParallelism enables parallel artifact operations (uploads/downloads). Defaults to false.",
+          "type": "boolean"
+        },
         "endpoint": {
           "description": "Endpoint is the service url associated with an account. It is most likely \"https://\u003cACCOUNT_NAME\u003e.blob.core.windows.net\"",
           "type": "string"
+        },
+        "fileCountThreshold": {
+          "description": "FileCountThreshold enables parallel operations when the number of files exceeds this threshold and EnableParallelism is true. Defaults to 0 (always use parallelism if \u003e 1 file).",
+          "type": "integer"
+        },
+        "fileSizeThreshold": {
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.api.resource.Quantity",
+          "description": "FileSizeThreshold enables parallel multipart uploads for files larger than this size (e.g., \"100Mi\", \"1Gi\") when EnableParallelism is true. Defaults to 0 (always use multipart if possible and parallelism is enabled)."
+        },
+        "parallelism": {
+          "description": "Parallelism limits the maximum number of parallel artifact operations (uploads/downloads) when EnableParallelism is true. Defaults to 0 (no limit).",
+          "type": "integer"
         },
         "useSDKCreds": {
           "description": "UseSDKCreds tells the driver to figure out credentials based on sdk defaults.",
@@ -5269,9 +5285,25 @@
           "description": "Bucket is the name of the bucket",
           "type": "string"
         },
+        "enableParallelism": {
+          "description": "EnableParallelism enables parallel artifact operations (uploads/downloads). Defaults to false.",
+          "type": "boolean"
+        },
+        "fileCountThreshold": {
+          "description": "FileCountThreshold enables parallel operations when the number of files exceeds this threshold and EnableParallelism is true. Defaults to 0 (always use parallelism if \u003e 1 file).",
+          "type": "integer"
+        },
+        "fileSizeThreshold": {
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.api.resource.Quantity",
+          "description": "FileSizeThreshold enables parallel multipart uploads for files larger than this size (e.g., \"100Mi\", \"1Gi\") when EnableParallelism is true. Defaults to 0 (always use multipart if possible and parallelism is enabled)."
+        },
         "keyFormat": {
           "description": "KeyFormat defines the format of how to store keys and can reference workflow variables.",
           "type": "string"
+        },
+        "parallelism": {
+          "description": "Parallelism limits the maximum number of parallel artifact operations (uploads/downloads) when EnableParallelism is true. Defaults to 0 (no limit).",
+          "type": "integer"
         },
         "serviceAccountKeySecret": {
           "$ref": "#/definitions/io.k8s.api.core.v1.SecretKeySelector",
@@ -6631,12 +6663,24 @@
           "$ref": "#/definitions/io.argoproj.workflow.v1alpha1.CreateS3BucketOptions",
           "description": "CreateBucketIfNotPresent tells the driver to attempt to create the S3 bucket for output artifacts, if it doesn't exist. Setting Enabled Encryption will apply either SSE-S3 to the bucket if KmsKeyId is not set or SSE-KMS if it is."
         },
+        "enableParallelism": {
+          "description": "EnableParallelism enables parallel artifact operations (uploads/downloads). Defaults to false.",
+          "type": "boolean"
+        },
         "encryptionOptions": {
           "$ref": "#/definitions/io.argoproj.workflow.v1alpha1.S3EncryptionOptions"
         },
         "endpoint": {
           "description": "Endpoint is the hostname of the bucket endpoint",
           "type": "string"
+        },
+        "fileCountThreshold": {
+          "description": "FileCountThreshold enables parallel operations when the number of files exceeds this threshold and EnableParallelism is true. Defaults to 0 (always use parallelism if \u003e 1 file).",
+          "type": "integer"
+        },
+        "fileSizeThreshold": {
+          "$ref": "#/definitions/io.k8s.apimachinery.pkg.api.resource.Quantity",
+          "description": "FileSizeThreshold enables parallel multipart uploads for files larger than this size (e.g., \"100Mi\", \"1Gi\") when EnableParallelism is true. Defaults to 0 (always use multipart if possible and parallelism is enabled)."
         },
         "insecure": {
           "description": "Insecure will connect to the service with TLS",
@@ -6649,6 +6693,10 @@
         "keyPrefix": {
           "description": "KeyPrefix is prefix used as part of the bucket key in which the controller will store artifacts. DEPRECATED. Use KeyFormat instead",
           "type": "string"
+        },
+        "parallelism": {
+          "description": "Parallelism limits the maximum number of parallel artifact operations (uploads/downloads) when EnableParallelism is true. Defaults to 0 (no limit).",
+          "type": "integer"
         },
         "region": {
           "description": "Region contains the optional bucket region",

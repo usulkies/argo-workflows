@@ -1336,12 +1336,39 @@ func schema_pkg_apis_workflow_v1alpha1_AzureArtifactRepository(ref common.Refere
 							Format:      "",
 						},
 					},
+					"enableParallelism": {
+						SchemaProps: spec.SchemaProps{
+							Description: "EnableParallelism enables parallel artifact operations (uploads/downloads). Defaults to false.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"parallelism": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Parallelism limits the maximum number of parallel artifact operations (uploads/downloads) when EnableParallelism is true. Defaults to 0 (no limit).",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"fileCountThreshold": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FileCountThreshold enables parallel operations when the number of files exceeds this threshold and EnableParallelism is true. Defaults to 0 (always use parallelism if > 1 file).",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"fileSizeThreshold": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FileSizeThreshold enables parallel multipart uploads for files larger than this size (e.g., \"100Mi\", \"1Gi\") when EnableParallelism is true. Defaults to 0 (always use multipart if possible and parallelism is enabled).",
+							Ref:         ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+						},
+					},
 				},
 				Required: []string{"endpoint", "container"},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/api/core/v1.SecretKeySelector"},
+			"k8s.io/api/core/v1.SecretKeySelector", "k8s.io/apimachinery/pkg/api/resource.Quantity"},
 	}
 }
 
@@ -2752,11 +2779,38 @@ func schema_pkg_apis_workflow_v1alpha1_GCSArtifactRepository(ref common.Referenc
 							Format:      "",
 						},
 					},
+					"enableParallelism": {
+						SchemaProps: spec.SchemaProps{
+							Description: "EnableParallelism enables parallel artifact operations (uploads/downloads). Defaults to false.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"parallelism": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Parallelism limits the maximum number of parallel artifact operations (uploads/downloads) when EnableParallelism is true. Defaults to 0 (no limit).",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"fileCountThreshold": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FileCountThreshold enables parallel operations when the number of files exceeds this threshold and EnableParallelism is true. Defaults to 0 (always use parallelism if > 1 file).",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"fileSizeThreshold": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FileSizeThreshold enables parallel multipart uploads for files larger than this size (e.g., \"100Mi\", \"1Gi\") when EnableParallelism is true. Defaults to 0 (always use multipart if possible and parallelism is enabled).",
+							Ref:         ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"k8s.io/api/core/v1.SecretKeySelector"},
+			"k8s.io/api/core/v1.SecretKeySelector", "k8s.io/apimachinery/pkg/api/resource.Quantity"},
 	}
 }
 
@@ -5384,11 +5438,38 @@ func schema_pkg_apis_workflow_v1alpha1_S3ArtifactRepository(ref common.Reference
 							Format:      "",
 						},
 					},
+					"enableParallelism": {
+						SchemaProps: spec.SchemaProps{
+							Description: "EnableParallelism enables parallel artifact operations (uploads/downloads). Defaults to false.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"parallelism": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Parallelism limits the maximum number of parallel artifact operations (uploads/downloads) when EnableParallelism is true. Defaults to 0 (no limit).",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"fileCountThreshold": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FileCountThreshold enables parallel operations when the number of files exceeds this threshold and EnableParallelism is true. Defaults to 0 (always use parallelism if > 1 file).",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"fileSizeThreshold": {
+						SchemaProps: spec.SchemaProps{
+							Description: "FileSizeThreshold enables parallel multipart uploads for files larger than this size (e.g., \"100Mi\", \"1Gi\") when EnableParallelism is true. Defaults to 0 (always use multipart if possible and parallelism is enabled).",
+							Ref:         ref("k8s.io/apimachinery/pkg/api/resource.Quantity"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1.CreateS3BucketOptions", "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1.S3EncryptionOptions", "k8s.io/api/core/v1.SecretKeySelector"},
+			"github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1.CreateS3BucketOptions", "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1.S3EncryptionOptions", "k8s.io/api/core/v1.SecretKeySelector", "k8s.io/apimachinery/pkg/api/resource.Quantity"},
 	}
 }
 

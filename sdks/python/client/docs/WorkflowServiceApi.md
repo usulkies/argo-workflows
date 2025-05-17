@@ -11377,12 +11377,20 @@ with argo_workflows.ApiClient(configuration) as api_client:
                             ),
                             blob_name_format="blob_name_format_example",
                             container="container_example",
+                            enable_parallelism=True,
                             endpoint="endpoint_example",
+                            file_count_threshold=1,
+                            file_size_threshold="file_size_threshold_example",
+                            parallelism=1,
                             use_sdk_creds=True,
                         ),
                         gcs=IoArgoprojWorkflowV1alpha1GCSArtifactRepository(
                             bucket="bucket_example",
+                            enable_parallelism=True,
+                            file_count_threshold=1,
+                            file_size_threshold="file_size_threshold_example",
                             key_format="key_format_example",
+                            parallelism=1,
                             service_account_key_secret=SecretKeySelector(
                                 key="key_example",
                                 name="name_example",
@@ -11453,6 +11461,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                             create_bucket_if_not_present=IoArgoprojWorkflowV1alpha1CreateS3BucketOptions(
                                 object_locking=True,
                             ),
+                            enable_parallelism=True,
                             encryption_options=IoArgoprojWorkflowV1alpha1S3EncryptionOptions(
                                 enable_encryption=True,
                                 kms_encryption_context="kms_encryption_context_example",
@@ -11464,9 +11473,12 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                 ),
                             ),
                             endpoint="endpoint_example",
+                            file_count_threshold=1,
+                            file_size_threshold="file_size_threshold_example",
                             insecure=True,
                             key_format="key_format_example",
                             key_prefix="key_prefix_example",
+                            parallelism=1,
                             region="region_example",
                             role_arn="role_arn_example",
                             secret_key_secret=SecretKeySelector(
@@ -40458,12 +40470,20 @@ with argo_workflows.ApiClient(configuration) as api_client:
                             ),
                             blob_name_format="blob_name_format_example",
                             container="container_example",
+                            enable_parallelism=True,
                             endpoint="endpoint_example",
+                            file_count_threshold=1,
+                            file_size_threshold="file_size_threshold_example",
+                            parallelism=1,
                             use_sdk_creds=True,
                         ),
                         gcs=IoArgoprojWorkflowV1alpha1GCSArtifactRepository(
                             bucket="bucket_example",
+                            enable_parallelism=True,
+                            file_count_threshold=1,
+                            file_size_threshold="file_size_threshold_example",
                             key_format="key_format_example",
+                            parallelism=1,
                             service_account_key_secret=SecretKeySelector(
                                 key="key_example",
                                 name="name_example",
@@ -40534,6 +40554,7 @@ with argo_workflows.ApiClient(configuration) as api_client:
                             create_bucket_if_not_present=IoArgoprojWorkflowV1alpha1CreateS3BucketOptions(
                                 object_locking=True,
                             ),
+                            enable_parallelism=True,
                             encryption_options=IoArgoprojWorkflowV1alpha1S3EncryptionOptions(
                                 enable_encryption=True,
                                 kms_encryption_context="kms_encryption_context_example",
@@ -40545,9 +40566,12 @@ with argo_workflows.ApiClient(configuration) as api_client:
                                 ),
                             ),
                             endpoint="endpoint_example",
+                            file_count_threshold=1,
+                            file_size_threshold="file_size_threshold_example",
                             insecure=True,
                             key_format="key_format_example",
                             key_prefix="key_prefix_example",
+                            parallelism=1,
                             region="region_example",
                             role_arn="role_arn_example",
                             secret_key_secret=SecretKeySelector(

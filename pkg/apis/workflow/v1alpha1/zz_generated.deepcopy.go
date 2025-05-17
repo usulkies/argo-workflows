@@ -642,6 +642,26 @@ func (in *AzureArtifact) DeepCopy() *AzureArtifact {
 func (in *AzureArtifactRepository) DeepCopyInto(out *AzureArtifactRepository) {
 	*out = *in
 	in.AzureBlobContainer.DeepCopyInto(&out.AzureBlobContainer)
+	if in.EnableParallelism != nil {
+		in, out := &in.EnableParallelism, &out.EnableParallelism
+		*out = new(bool)
+		**out = **in
+	}
+	if in.Parallelism != nil {
+		in, out := &in.Parallelism, &out.Parallelism
+		*out = new(int64)
+		**out = **in
+	}
+	if in.FileCountThreshold != nil {
+		in, out := &in.FileCountThreshold, &out.FileCountThreshold
+		*out = new(int64)
+		**out = **in
+	}
+	if in.FileSizeThreshold != nil {
+		in, out := &in.FileSizeThreshold, &out.FileSizeThreshold
+		x := (*in).DeepCopy()
+		*out = &x
+	}
 	return
 }
 
@@ -1348,6 +1368,26 @@ func (in *GCSArtifact) DeepCopy() *GCSArtifact {
 func (in *GCSArtifactRepository) DeepCopyInto(out *GCSArtifactRepository) {
 	*out = *in
 	in.GCSBucket.DeepCopyInto(&out.GCSBucket)
+	if in.EnableParallelism != nil {
+		in, out := &in.EnableParallelism, &out.EnableParallelism
+		*out = new(bool)
+		**out = **in
+	}
+	if in.Parallelism != nil {
+		in, out := &in.Parallelism, &out.Parallelism
+		*out = new(int64)
+		**out = **in
+	}
+	if in.FileCountThreshold != nil {
+		in, out := &in.FileCountThreshold, &out.FileCountThreshold
+		*out = new(int64)
+		**out = **in
+	}
+	if in.FileSizeThreshold != nil {
+		in, out := &in.FileSizeThreshold, &out.FileSizeThreshold
+		x := (*in).DeepCopy()
+		*out = &x
+	}
 	return
 }
 
@@ -2735,6 +2775,26 @@ func (in *S3Artifact) DeepCopy() *S3Artifact {
 func (in *S3ArtifactRepository) DeepCopyInto(out *S3ArtifactRepository) {
 	*out = *in
 	in.S3Bucket.DeepCopyInto(&out.S3Bucket)
+	if in.EnableParallelism != nil {
+		in, out := &in.EnableParallelism, &out.EnableParallelism
+		*out = new(bool)
+		**out = **in
+	}
+	if in.Parallelism != nil {
+		in, out := &in.Parallelism, &out.Parallelism
+		*out = new(int64)
+		**out = **in
+	}
+	if in.FileCountThreshold != nil {
+		in, out := &in.FileCountThreshold, &out.FileCountThreshold
+		*out = new(int64)
+		**out = **in
+	}
+	if in.FileSizeThreshold != nil {
+		in, out := &in.FileSizeThreshold, &out.FileSizeThreshold
+		x := (*in).DeepCopy()
+		*out = &x
+	}
 	return
 }
 

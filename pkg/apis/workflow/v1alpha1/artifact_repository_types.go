@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"path"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 var (
@@ -80,6 +82,22 @@ type S3ArtifactRepository struct {
 	// KeyPrefix is prefix used as part of the bucket key in which the controller will store artifacts.
 	// DEPRECATED. Use KeyFormat instead
 	KeyPrefix string `json:"keyPrefix,omitempty" protobuf:"bytes,3,opt,name=keyPrefix"`
+
+	// EnableParallelism enables parallel artifact operations (uploads/downloads). Defaults to false.
+	// +optional
+	EnableParallelism *bool `json:"enableParallelism,omitempty" protobuf:"varint,12,opt,name=enableParallelism"`
+
+	// Parallelism limits the maximum number of parallel artifact operations (uploads/downloads) when EnableParallelism is true. Defaults to 0 (no limit).
+	// +optional
+	Parallelism *int64 `json:"parallelism,omitempty" protobuf:"varint,13,opt,name=parallelism"`
+
+	// FileCountThreshold enables parallel operations when the number of files exceeds this threshold and EnableParallelism is true. Defaults to 0 (always use parallelism if > 1 file).
+	// +optional
+	FileCountThreshold *int64 `json:"fileCountThreshold,omitempty" protobuf:"varint,14,opt,name=fileCountThreshold"`
+
+	// FileSizeThreshold enables parallel multipart uploads for files larger than this size (e.g., "100Mi", "1Gi") when EnableParallelism is true. Defaults to 0 (always use multipart if possible and parallelism is enabled).
+	// +optional
+	FileSizeThreshold *resource.Quantity `json:"fileSizeThreshold,omitempty" protobuf:"bytes,15,opt,name=fileSizeThreshold"`
 }
 
 func (r *S3ArtifactRepository) IntoArtifactLocation(l *ArtifactLocation) {
@@ -112,6 +130,22 @@ type GCSArtifactRepository struct {
 
 	// KeyFormat defines the format of how to store keys and can reference workflow variables.
 	KeyFormat string `json:"keyFormat,omitempty" protobuf:"bytes,2,opt,name=keyFormat"`
+
+	// EnableParallelism enables parallel artifact operations (uploads/downloads). Defaults to false.
+	// +optional
+	EnableParallelism *bool `json:"enableParallelism,omitempty" protobuf:"varint,4,opt,name=enableParallelism"`
+
+	// Parallelism limits the maximum number of parallel artifact operations (uploads/downloads) when EnableParallelism is true. Defaults to 0 (no limit).
+	// +optional
+	Parallelism *int64 `json:"parallelism,omitempty" protobuf:"varint,5,opt,name=parallelism"`
+
+	// FileCountThreshold enables parallel operations when the number of files exceeds this threshold and EnableParallelism is true. Defaults to 0 (always use parallelism if > 1 file).
+	// +optional
+	FileCountThreshold *int64 `json:"fileCountThreshold,omitempty" protobuf:"varint,6,opt,name=fileCountThreshold"`
+
+	// FileSizeThreshold enables parallel multipart uploads for files larger than this size (e.g., "100Mi", "1Gi") when EnableParallelism is true. Defaults to 0 (always use multipart if possible and parallelism is enabled).
+	// +optional
+	FileSizeThreshold *resource.Quantity `json:"fileSizeThreshold,omitempty" protobuf:"bytes,7,opt,name=fileSizeThreshold"`
 }
 
 func (r *GCSArtifactRepository) IntoArtifactLocation(l *ArtifactLocation) {
@@ -149,6 +183,22 @@ type AzureArtifactRepository struct {
 
 	// BlobNameFormat is defines the format of how to store blob names. Can reference workflow variables
 	BlobNameFormat string `json:"blobNameFormat,omitempty" protobuf:"bytes,2,opt,name=blobNameFormat"`
+
+	// EnableParallelism enables parallel artifact operations (uploads/downloads). Defaults to false.
+	// +optional
+	EnableParallelism *bool `json:"enableParallelism,omitempty" protobuf:"varint,3,opt,name=enableParallelism"`
+
+	// Parallelism limits the maximum number of parallel artifact operations (uploads/downloads) when EnableParallelism is true. Defaults to 0 (no limit).
+	// +optional
+	Parallelism *int64 `json:"parallelism,omitempty" protobuf:"varint,4,opt,name=parallelism"`
+
+	// FileCountThreshold enables parallel operations when the number of files exceeds this threshold and EnableParallelism is true. Defaults to 0 (always use parallelism if > 1 file).
+	// +optional
+	FileCountThreshold *int64 `json:"fileCountThreshold,omitempty" protobuf:"varint,5,opt,name=fileCountThreshold"`
+
+	// FileSizeThreshold enables parallel multipart uploads for files larger than this size (e.g., "100Mi", "1Gi") when EnableParallelism is true. Defaults to 0 (always use multipart if possible and parallelism is enabled).
+	// +optional
+	FileSizeThreshold *resource.Quantity `json:"fileSizeThreshold,omitempty" protobuf:"bytes,6,opt,name=fileSizeThreshold"`
 }
 
 func (r *AzureArtifactRepository) IntoArtifactLocation(l *ArtifactLocation) {

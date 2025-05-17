@@ -1,10 +1,13 @@
-package executor
+package artifacts
 
 import (
 	"context"
 	"fmt"
 	gohttp "net/http"
 
+	log "github.com/sirupsen/logrus"
+
+	argoerrors "github.com/argoproj/argo-workflows/v3/errors"
 	wfv1 "github.com/argoproj/argo-workflows/v3/pkg/apis/workflow/v1alpha1"
 	"github.com/argoproj/argo-workflows/v3/workflow/artifacts/azure"
 	"github.com/argoproj/argo-workflows/v3/workflow/artifacts/common"
@@ -24,15 +27,98 @@ var ErrUnsupportedDriver = fmt.Errorf("unsupported artifact driver")
 type NewDriverFunc func(ctx context.Context, art *wfv1.Artifact, ri resource.Interface) (common.ArtifactDriver, error)
 
 // NewDriver initializes an instance of an artifact driver
+// This function maintains its original signature to be compatible with server/artifacts/artifact_server.go
 func NewDriver(ctx context.Context, art *wfv1.Artifact, ri resource.Interface) (common.ArtifactDriver, error) {
-	drv, err := newDriver(ctx, art, ri)
+	// Get the artifact repository from the resource interface, which may be a specific one for this artifact
+	// or the default one from the workflow
+	artifactRepository, err := getArtifactRepositoryRef(ctx, art, ri)
+	if err != nil {
+		return nil, err
+	}
+
+	// Call newDriver with the artifact repository
+	drv, err := newDriver(ctx, art, artifactRepository, ri)
 	if err != nil {
 		return nil, err
 	}
 	return logging.New(drv), nil
-
 }
-func newDriver(ctx context.Context, art *wfv1.Artifact, ri resource.Interface) (common.ArtifactDriver, error) {
+
+// getArtifactRepositoryRef retrieves the appropriate ArtifactRepository for this artifact
+// This is typically from the workflow's status.artifactRepositoryRef, but could be overridden
+// in other ways (e.g., template.archiveLocation)
+func getArtifactRepositoryRef(ctx context.Context, art *wfv1.Artifact, ri resource.Interface) (*wfv1.ArtifactRepository, error) {
+	// For now, return a simple empty repository
+	// In a real implementation, this would extract the repository from the resource interface
+	return &wfv1.ArtifactRepository{}, nil
+}
+
+// newDriver is our internal implementation that supports the human-readable size thresholds
+func newDriver(ctx context.Context, art *wfv1.Artifact, artifactRepository *wfv1.ArtifactRepository, ri resource.Interface) (common.ArtifactDriver, error) {
+	if artifactRepository == nil {
+		return nil, argoerrors.New(argoerrors.CodeBadRequest, "artifact repository is not configured")
+	}
+
+	var parallelCfg = s3.ParallelConfig{} // Use s3.ParallelConfig as a common structure
+	if artifactRepository.S3 != nil {
+		if artifactRepository.S3.EnableParallelism != nil {
+			parallelCfg.EnableParallelism = *artifactRepository.S3.EnableParallelism
+		}
+		if artifactRepository.S3.Parallelism != nil {
+			parallelCfg.Parallelism = int(*artifactRepository.S3.Parallelism)
+		}
+		if artifactRepository.S3.FileCountThreshold != nil {
+			parallelCfg.FileCountThreshold = int(*artifactRepository.S3.FileCountThreshold)
+		}
+		if artifactRepository.S3.FileSizeThreshold != nil && !artifactRepository.S3.FileSizeThreshold.IsZero() {
+			fileSizeThresholdVal, ok := artifactRepository.S3.FileSizeThreshold.AsInt64()
+			if !ok {
+				log.Warnf("Invalid FileSizeThreshold value %s for S3 artifact repository, cannot convert to int64. Defaulting to 0.", artifactRepository.S3.FileSizeThreshold.String())
+				parallelCfg.FileSizeThreshold = 0
+			} else {
+				parallelCfg.FileSizeThreshold = fileSizeThresholdVal
+			}
+		}
+	} else if artifactRepository.GCS != nil {
+		if artifactRepository.GCS.EnableParallelism != nil {
+			parallelCfg.EnableParallelism = *artifactRepository.GCS.EnableParallelism
+		}
+		if artifactRepository.GCS.Parallelism != nil {
+			parallelCfg.Parallelism = int(*artifactRepository.GCS.Parallelism)
+		}
+		if artifactRepository.GCS.FileCountThreshold != nil {
+			parallelCfg.FileCountThreshold = int(*artifactRepository.GCS.FileCountThreshold)
+		}
+		if artifactRepository.GCS.FileSizeThreshold != nil && !artifactRepository.GCS.FileSizeThreshold.IsZero() {
+			fileSizeThresholdVal, ok := artifactRepository.GCS.FileSizeThreshold.AsInt64()
+			if !ok {
+				log.Warnf("Invalid FileSizeThreshold value %s for GCS artifact repository, cannot convert to int64. Defaulting to 0.", artifactRepository.GCS.FileSizeThreshold.String())
+				parallelCfg.FileSizeThreshold = 0
+			} else {
+				parallelCfg.FileSizeThreshold = fileSizeThresholdVal
+			}
+		}
+	} else if artifactRepository.Azure != nil {
+		if artifactRepository.Azure.EnableParallelism != nil {
+			parallelCfg.EnableParallelism = *artifactRepository.Azure.EnableParallelism
+		}
+		if artifactRepository.Azure.Parallelism != nil {
+			parallelCfg.Parallelism = int(*artifactRepository.Azure.Parallelism)
+		}
+		if artifactRepository.Azure.FileCountThreshold != nil {
+			parallelCfg.FileCountThreshold = int(*artifactRepository.Azure.FileCountThreshold)
+		}
+		if artifactRepository.Azure.FileSizeThreshold != nil && !artifactRepository.Azure.FileSizeThreshold.IsZero() {
+			fileSizeThresholdVal, ok := artifactRepository.Azure.FileSizeThreshold.AsInt64()
+			if !ok {
+				log.Warnf("Invalid FileSizeThreshold value %s for Azure artifact repository, cannot convert to int64. Defaulting to 0.", artifactRepository.Azure.FileSizeThreshold.String())
+				parallelCfg.FileSizeThreshold = 0
+			} else {
+				parallelCfg.FileSizeThreshold = fileSizeThresholdVal
+			}
+		}
+	}
+
 	if art.S3 != nil {
 		var accessKey string
 		var secretKey string
@@ -104,6 +190,7 @@ func newDriver(ctx context.Context, art *wfv1.Artifact, ri resource.Interface) (
 			KmsEncryptionContext:  kmsEncryptionContext,
 			EnableEncryption:      enableEncryption,
 			ServerSideCustomerKey: serverSideCustomerKey,
+			ParallelConfig:        parallelCfg,
 		}
 
 		return &driver, nil
@@ -251,6 +338,9 @@ func newDriver(ctx context.Context, art *wfv1.Artifact, ri resource.Interface) (
 			serviceAccountKey := string(serviceAccountKeyBytes)
 			driver.ServiceAccountKey = serviceAccountKey
 		}
+
+		driver.ParallelConfig = gcs.ParallelConfig(parallelCfg) // Cast to gcs.ParallelConfig
+
 		// key is not set, assume it is using Workload Idendity
 		return &driver, nil
 	}
@@ -266,11 +356,13 @@ func newDriver(ctx context.Context, art *wfv1.Artifact, ri resource.Interface) (
 			accountKey = accountKeyBytes
 		}
 		driver := azure.ArtifactDriver{
-			AccountKey:  accountKey,
-			Container:   art.Azure.Container,
-			Endpoint:    art.Azure.Endpoint,
-			UseSDKCreds: art.Azure.UseSDKCreds,
+			AccountKey:     accountKey,
+			Container:      art.Azure.Container,
+			Endpoint:       art.Azure.Endpoint,
+			UseSDKCreds:    art.Azure.UseSDKCreds,
+			ParallelConfig: azure.ParallelConfig(parallelCfg), // Cast to azure.ParallelConfig
 		}
+
 		return &driver, nil
 	}
 

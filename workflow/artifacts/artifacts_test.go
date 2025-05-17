@@ -1,4 +1,4 @@
-package executor
+package artifacts
 
 import (
 	"context"
@@ -54,7 +54,10 @@ func TestNewDriverS3(t *testing.T) {
 		}},
 	}
 
-	got, err := newDriver(context.TODO(), art, &mockResourceInterface{})
+	// Create a minimal artifact repository for the test
+	artifactRepository := &wfv1.ArtifactRepository{}
+
+	got, err := newDriver(context.TODO(), art, artifactRepository, &mockResourceInterface{})
 	require.NoError(t, err)
 
 	artDriver := got.(*s3.ArtifactDriver)

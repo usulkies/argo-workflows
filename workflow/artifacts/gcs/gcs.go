@@ -25,9 +25,25 @@ import (
 	"github.com/argoproj/argo-workflows/v3/workflow/artifacts/common"
 )
 
+// ParallelConfig holds the parallelism configuration for GCS artifacts
+// Note: While this config is defined, the current GCS driver implementation
+// does not yet leverage it for parallel uploads/downloads in the same way
+// the S3 driver does. It is available for future enhancements.
+type ParallelConfig struct {
+	// EnableParallelism is true if parallel operations are enabled
+	EnableParallelism bool
+	// Parallelism limits the maximum number of parallel operations (0 means no limit)
+	Parallelism int
+	// FileCountThreshold is the minimum number of files to enable parallel operations
+	FileCountThreshold int
+	// FileSizeThreshold is the minimum size in bytes for a file to use parallel upload/download features (if implemented)
+	FileSizeThreshold int64
+}
+
 // ArtifactDriver is a driver for GCS
 type ArtifactDriver struct {
 	ServiceAccountKey string
+	ParallelConfig    ParallelConfig
 }
 
 var (

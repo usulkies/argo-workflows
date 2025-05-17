@@ -24655,8 +24655,22 @@ spec:
                             type: string
                           container:
                             type: string
+                          enableParallelism:
+                            type: boolean
                           endpoint:
                             type: string
+                          fileCountThreshold:
+                            format: int64
+                            type: integer
+                          fileSizeThreshold:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          parallelism:
+                            format: int64
+                            type: integer
                           useSDKCreds:
                             type: boolean
                         required:
@@ -24667,8 +24681,22 @@ spec:
                         properties:
                           bucket:
                             type: string
+                          enableParallelism:
+                            type: boolean
+                          fileCountThreshold:
+                            format: int64
+                            type: integer
+                          fileSizeThreshold:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                           keyFormat:
                             type: string
+                          parallelism:
+                            format: int64
+                            type: integer
                           serviceAccountKeySecret:
                             properties:
                               key:
@@ -24828,6 +24856,8 @@ spec:
                               objectLocking:
                                 type: boolean
                             type: object
+                          enableParallelism:
+                            type: boolean
                           encryptionOptions:
                             properties:
                               enableEncryption:
@@ -24852,12 +24882,24 @@ spec:
                             type: object
                           endpoint:
                             type: string
+                          fileCountThreshold:
+                            format: int64
+                            type: integer
+                          fileSizeThreshold:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
                           insecure:
                             type: boolean
                           keyFormat:
                             type: string
                           keyPrefix:
                             type: string
+                          parallelism:
+                            format: int64
+                            type: integer
                           region:
                             type: string
                           roleARN:

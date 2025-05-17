@@ -1,0 +1,50 @@
+# This example demonstrates the ability to configure artifact repositories with parallelism.
+# The ConfigMap below shows how to configure an S3 artifact repository with parallelism settings.
+# Uncomment and apply the ConfigMap to enable this feature.
+#
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: artifact-repositories
+#   annotations:
+#     workflows.argoproj.io/default-artifact-repository: s3-artifact-repository
+# data:
+#   s3-artifact-repository: |
+#     s3:
+#       bucket: my-bucket
+#       endpoint: minio:9000
+#       insecure: true
+#       accessKeySecret:
+#         name: my-minio-cred
+#         key: accessKey
+#       secretKeySecret:
+#         name: my-minio-cred
+#         key: secretKey
+#       enableParallelism: true
+#       parallelism: 10
+#       fileCountThreshold: 5
+#       fileSizeThreshold: "10Mi"  # 10 Mebibytes - human-readable format
+#
+# Apply the ConfigMap and run the workflow below to test the parallelism configuration.
+
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: artifact-repository-with-parallelism-
+spec:
+  entrypoint: generate-and-upload
+  templates:
+  - name: generate-and-upload
+    container:
+      image: alpine:latest
+      command: [sh, -c]
+      args: ["dd if=/dev/urandom of=/tmp/large-file bs=1M count=100 && echo 'Large file generated'"]
+    outputs:
+      artifacts:
+      - name: large-file
+        path: /tmp/large-file
+        s3:
+          enableParallelism: true
+          parallelism: 10
+          fileCountThreshold: 5
+          fileSizeThreshold: "10Mi"

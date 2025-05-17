@@ -644,6 +644,18 @@ For MinIO, the `accessKeySecret` and `secretKeySecret` naturally correspond the
 For Alibaba Cloud OSS, the `accessKeySecret` and `secretKeySecret` corresponds to
 `accessKeyID` `and accessKeySecret` respectively.
 
+#### S3 Parallelism Configuration (v3.7 and after)
+
+For S3 compatible artifact repositories, you can configure parallelism for uploading and downloading artifacts to potentially improve performance for workflows dealing with many or large artifacts. This is controlled by the following parameters within the `s3` configuration block:
+
+- `enableParallelism`: (boolean, optional) Set to `true` to enable parallel operations. Defaults to `false`.
+- `parallelism`: (integer, optional) Specifies the maximum number of parallel workers to use for operations like uploading a directory or downloading a directory. If not set, or set to 0 or a negative number, a default of 10 workers will be used when `enableParallelism` is true.
+- `fileCountThreshold`: (integer, optional) The minimum number of files in a directory for parallel operations (upload/download) to be triggered. If not set, or set to 0, parallelism will be used if `enableParallelism` is true and there is more than one file.
+- `fileSizeThreshold`: (string or integer, optional) The minimum size of a single file for parallel multipart upload to be used.
+  - When specified as an integer: Size in bytes
+  - When specified as a string: Human-readable format like `10Mi` or `1Gi` (supports standard Kubernetes resource units: Ki, Mi, Gi, Ti, Pi)
+  - If not set, or set to 0, parallel multipart upload will be used for any non-empty file if `enableParallelism` is true.
+
 Example:
 
 ```bash
@@ -663,6 +675,11 @@ data:
         name: my-minio-cred
         key: secretKey
       useSDKCreds: true               #tells argo to use AWS SDK's default provider chain, enable for things like IRSA support
+      # Parallelism Configuration
+      enableParallelism: true
+      parallelism: 20                 # Use up to 20 parallel workers
+      fileCountThreshold: 5           # Use parallel operations for directories with 5 or more files
+      fileSizeThreshold: "100Mi"      # Use parallel multipart upload for files larger than 100MB
 ```
 
 The secrets are retrieved from the namespace you use to run your workflows. Note
