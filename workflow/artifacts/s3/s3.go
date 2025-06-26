@@ -13,6 +13,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
@@ -89,20 +90,23 @@ const (
 )
 
 type S3ClientOpts struct {
-	Endpoint        string
-	AddressingStyle AddressingStyle
-	Region          string
-	Secure          bool
-	Transport       http.RoundTripper
-	AccessKey       string
-	SecretKey       string
-	SessionToken    string
-	Trace           bool
-	RoleARN         string
-	RoleSessionName string
-	UseSDKCreds     bool
-	EncryptOpts     EncryptOpts
-	SendContentMd5  bool
+	Endpoint             string
+	AddressingStyle      AddressingStyle
+	Region               string
+	Secure               bool
+	Transport            http.RoundTripper
+	AccessKey            string
+	SecretKey            string
+	SessionToken         string
+	Trace                bool
+	RoleARN              string
+	RoleSessionName      string
+	UseSDKCreds          bool
+	EncryptOpts          EncryptOpts
+	SendContentMd5       bool
+	ParallelTransfers    int
+	MultipartPartSize    int64
+	MultipartConcurrency int
 }
 
 type s3client struct {
@@ -129,6 +133,9 @@ type ArtifactDriver struct {
 	KmsEncryptionContext  string
 	EnableEncryption      bool
 	ServerSideCustomerKey string
+	ParallelTransfers     int
+	MultipartPartSize     int64
+	MultipartConcurrency  int
 }
 
 var _ artifactscommon.ArtifactDriver = &ArtifactDriver{}
@@ -151,7 +158,10 @@ func (s3Driver *ArtifactDriver) newS3Client(ctx context.Context) (S3Client, erro
 			Enabled:               s3Driver.EnableEncryption,
 			ServerSideCustomerKey: s3Driver.ServerSideCustomerKey,
 		},
-		SendContentMd5: true,
+		SendContentMd5:       true,
+		ParallelTransfers:    s3Driver.ParallelTransfers,
+		MultipartPartSize:    s3Driver.MultipartPartSize,
+		MultipartConcurrency: s3Driver.MultipartConcurrency,
 	}
 
 	if tr, err := GetDefaultTransport(opts); err == nil {
@@ -511,7 +521,12 @@ func (s *s3client) PutFile(bucket, key, path string) error {
 		return err
 	}
 
-	_, err = s.minioClient.FPutObject(s.ctx, bucket, key, path, minio.PutObjectOptions{SendContentMd5: s.SendContentMd5, ServerSideEncryption: encOpts})
+	_, err = s.minioClient.FPutObject(s.ctx, bucket, key, path, minio.PutObjectOptions{
+		SendContentMd5:       s.SendContentMd5,
+		ServerSideEncryption: encOpts,
+		PartSize:             uint64(s.MultipartPartSize),
+		NumThreads:           s.MultipartConcurrency,
+	})
 	if err != nil {
 		return err
 	}
@@ -572,13 +587,25 @@ func generatePutTasks(keyPrefix, rootPath string) chan uploadTask {
 // PutDirectory puts a complete directory into a bucket key prefix, with each file in the directory
 // a separate key in the bucket.
 func (s *s3client) PutDirectory(bucket, key, path string) error {
+	sem := make(chan struct{}, s.ParallelTransfers)
+	var wg sync.WaitGroup
+	var retErr error
 	for putTask := range generatePutTasks(key, path) {
-		err := s.PutFile(bucket, putTask.key, putTask.path)
-		if err != nil {
-			return err
+		if retErr != nil {
+			break
 		}
+		sem <- struct{}{}
+		wg.Add(1)
+		go func(t uploadTask) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			if err := s.PutFile(bucket, t.key, t.path); err != nil && retErr == nil {
+				retErr = err
+			}
+		}(putTask)
 	}
-	return nil
+	wg.Wait()
+	return retErr
 }
 
 // GetFile downloads a file to a local file path
@@ -650,21 +677,31 @@ func (s *s3client) GetDirectory(bucket, keyPrefix, path string) error {
 		return err
 	}
 
+	sem := make(chan struct{}, s.ParallelTransfers)
+	var wg sync.WaitGroup
+	var retErr error
 	for _, objKey := range keys {
+		if retErr != nil {
+			break
+		}
 		relKeyPath := strings.TrimPrefix(objKey, keyPrefix)
 		localPath := filepath.Join(path, relKeyPath)
-
-		encOpts, err := s.EncryptOpts.buildServerSideEnc(bucket, objKey)
-		if err != nil {
-			return err
-		}
-
-		err = s.minioClient.FGetObject(s.ctx, bucket, objKey, localPath, minio.GetObjectOptions{ServerSideEncryption: encOpts})
-		if err != nil {
-			return err
-		}
+		sem <- struct{}{}
+		wg.Add(1)
+		go func(k, local string) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			encOpts, err := s.EncryptOpts.buildServerSideEnc(bucket, k)
+			if err == nil {
+				err = s.minioClient.FGetObject(s.ctx, bucket, k, local, minio.GetObjectOptions{ServerSideEncryption: encOpts})
+			}
+			if err != nil && retErr == nil {
+				retErr = err
+			}
+		}(objKey, localPath)
 	}
-	return nil
+	wg.Wait()
+	return retErr
 }
 
 // IsDirectory tests if the key is acting like a s3 directory. This just means it has at least one
