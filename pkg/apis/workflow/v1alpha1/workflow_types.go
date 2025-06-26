@@ -2585,13 +2585,16 @@ type S3Bucket struct {
 	// CASecret specifies the secret that contains the CA, used to verify the TLS connection
 	CASecret *apiv1.SecretKeySelector `json:"caSecret,omitempty" protobuf:"bytes,11,opt,name=caSecret"`
 
-	// ParallelTransfers controls the maximum number of concurrent upload or download operations
+	// ParallelTransfers controls the maximum number of concurrent upload or download operations.
+	// Defaults to 1 and capped at 32.
 	ParallelTransfers *int32 `json:"parallelTransfers,omitempty" protobuf:"varint,13,opt,name=parallelTransfers"`
 
-	// MultipartPartSize controls the size of each part in multipart uploads in bytes
+	// MultipartPartSize controls the size of each part in multipart uploads in bytes.
+	// Defaults to 5 MiB.
 	MultipartPartSize *int64 `json:"multipartPartSize,omitempty" protobuf:"varint,14,opt,name=multipartPartSize"`
 
-	// MultipartConcurrency controls the number of concurrent multipart upload parts
+	// MultipartConcurrency controls the number of concurrent multipart upload parts.
+	// Defaults to 4.
 	MultipartConcurrency *int32 `json:"multipartConcurrency,omitempty" protobuf:"varint,15,opt,name=multipartConcurrency"`
 }
 
