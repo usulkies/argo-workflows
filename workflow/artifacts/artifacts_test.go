@@ -62,3 +62,48 @@ func TestNewDriverS3(t *testing.T) {
 	assert.Equal(t, art.S3.SecretKeySecret.Key+"-secret", artDriver.SecretKey)
 	assert.Equal(t, art.S3.SessionTokenSecret.Key+"-secret", artDriver.SessionToken)
 }
+
+func TestNewDriverS3ParallelDefaults(t *testing.T) {
+	art := &wfv1.Artifact{
+		ArtifactLocation: wfv1.ArtifactLocation{S3: &wfv1.S3Artifact{
+			S3Bucket: wfv1.S3Bucket{
+				Endpoint: "endpoint",
+				Bucket:   "bucket",
+			},
+			Key: "art",
+		}},
+	}
+
+	got, err := newDriver(context.TODO(), art, &mockResourceInterface{})
+	require.NoError(t, err)
+	drv := got.(*s3.ArtifactDriver)
+	assert.Equal(t, 1, drv.ParallelTransfers)
+	assert.Equal(t, int64(5*1024*1024), drv.MultipartPartSize)
+	assert.Equal(t, 4, drv.MultipartConcurrency)
+}
+
+func TestNewDriverS3ParallelOverride(t *testing.T) {
+	pt := int32(64)
+	mpSize := int64(10 * 1024 * 1024)
+	mc := int32(8)
+	art := &wfv1.Artifact{
+		ArtifactLocation: wfv1.ArtifactLocation{S3: &wfv1.S3Artifact{
+			S3Bucket: wfv1.S3Bucket{
+				Endpoint:             "endpoint",
+				Bucket:               "bucket",
+				ParallelTransfers:    &pt,
+				MultipartPartSize:    &mpSize,
+				MultipartConcurrency: &mc,
+			},
+			Key: "art",
+		}},
+	}
+
+	got, err := newDriver(context.TODO(), art, &mockResourceInterface{})
+	require.NoError(t, err)
+	drv := got.(*s3.ArtifactDriver)
+	// Parallel transfers capped at 32
+	assert.Equal(t, 32, drv.ParallelTransfers)
+	assert.Equal(t, mpSize, drv.MultipartPartSize)
+	assert.Equal(t, int(mc), drv.MultipartConcurrency)
+}

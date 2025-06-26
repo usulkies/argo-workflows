@@ -104,6 +104,9 @@ func newDriver(ctx context.Context, art *wfv1.Artifact, ri resource.Interface) (
 			KmsEncryptionContext:  kmsEncryptionContext,
 			EnableEncryption:      enableEncryption,
 			ServerSideCustomerKey: serverSideCustomerKey,
+			ParallelTransfers:     int(getOrDefaultInt32(art.S3.ParallelTransfers, 1)),
+			MultipartPartSize:     getOrDefaultInt64(art.S3.MultipartPartSize, 5*1024*1024),
+			MultipartConcurrency:  int(getOrDefaultInt32(art.S3.MultipartConcurrency, 4)),
 		}
 
 		return &driver, nil
@@ -275,4 +278,21 @@ func newDriver(ctx context.Context, art *wfv1.Artifact, ri resource.Interface) (
 	}
 
 	return nil, ErrUnsupportedDriver
+}
+
+func getOrDefaultInt32(val *int32, def int32) int32 {
+	if val != nil && *val > 0 {
+		if *val > 32 {
+			return 32
+		}
+		return *val
+	}
+	return def
+}
+
+func getOrDefaultInt64(val *int64, def int64) int64 {
+	if val != nil && *val > 0 {
+		return *val
+	}
+	return def
 }
